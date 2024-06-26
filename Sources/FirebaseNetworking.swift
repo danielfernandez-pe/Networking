@@ -30,8 +30,8 @@ public struct FirebaseNetworking {
         return try JSONSerialization.data(withJSONObject: dict, options: [])
     }
 
-    public func get(path: String, queryField: String, value: Any) async throws -> Data {
-        let snapshot = try await db.collection(path).whereField(queryField, isGreaterThanOrEqualTo: value).getDocuments()
+    public func get(path: String, queryField: String, orderField: String, value: Any) async throws -> Data {
+        let snapshot = try await db.collection(path).order(by: orderField).whereField(queryField, isGreaterThanOrEqualTo: value).getDocuments()
         let dictArray = snapshot.documents.map {
             var dict = $0.data()
             dict["id"] = $0.documentID
