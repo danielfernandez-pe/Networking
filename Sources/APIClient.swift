@@ -10,7 +10,7 @@ import Foundation
 public actor APIClient {
     private let session: URLSession
     
-    init() {
+    public init() {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
         configuration.timeoutIntervalForRequest = 30
