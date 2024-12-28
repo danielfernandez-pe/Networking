@@ -11,15 +11,11 @@ let package = Package(
             name: "Networking",
             targets: ["Networking"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "10.0.0"),
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "Networking",
-            dependencies: [
-                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk")
-            ],
+            dependencies: [],
             path: "Sources"
         ),
         .testTarget(
