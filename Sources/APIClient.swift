@@ -6,23 +6,34 @@
 //
 
 import Foundation
+import Lumberjack
 
 public actor APIClient {
     private let session: URLSession
+    private let logger: LumberjackCoordinator
     
-    public init() {
+    public init(logger: LumberjackCoordinator) {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
         configuration.timeoutIntervalForRequest = 30
         
         session = URLSession(configuration: configuration)
+        self.logger = logger
     }
     
     public func get<T: Decodable>(
         _ url: URL,
         headers: [String: String]? = nil
     ) async throws -> T {
-        try await request(url: url, method: .GET, headers: headers)
+        logRequest(
+            url: url,
+            method: "GET",
+            headers: headers,
+            queryParameters: nil,
+            body: nil
+        )
+
+        return try await request(url: url, method: .GET, headers: headers)
     }
     
     public func post<T: Decodable, U: Encodable>(
@@ -96,9 +107,35 @@ public actor APIClient {
         }
         
         do {
-            return try JSONDecoder().decode(type, from: data)
+            return try CustomDecoder.main.decode(type, from: data)
         } catch {
             throw APIError.decodingError
         }
+    }
+    
+    private func logRequest(
+        url: URL,
+        method: String,
+        headers: [String: String]?,
+        queryParameters: [String: String]?,
+        body: Data?
+    ) {
+        let formattedHeaders = headers?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
+        let formattedQueryParameters = queryParameters?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
+        let bodyString = body.flatMap { String(data: $0, encoding: .utf8) } ?? "None"
+
+        let logMessage = """
+        [HTTP Request]
+        Method: \(method)
+        URL: \(url.absoluteString)
+        Headers: {
+            \(formattedHeaders)
+        }
+        Query Parameters: {
+            \(formattedQueryParameters)
+        }
+        Body: \(bodyString)
+        """
+        logger.info(logMessage)
     }
 }

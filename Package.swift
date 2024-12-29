@@ -11,11 +11,15 @@ let package = Package(
             name: "Networking",
             targets: ["Networking"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "git@github.com:danielfcodes/Logger.git", from: "1.2.1")
+    ],
     targets: [
         .target(
             name: "Networking",
-            dependencies: [],
+            dependencies: [
+                .product(name: "Lumberjack", package: "Logger"),
+            ],
             path: "Sources"
         ),
         .testTarget(
