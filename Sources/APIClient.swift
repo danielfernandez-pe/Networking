@@ -29,7 +29,6 @@ public actor APIClient {
             url: url,
             method: "GET",
             headers: headers,
-            queryParameters: nil,
             body: nil
         )
 
@@ -117,11 +116,9 @@ public actor APIClient {
         url: URL,
         method: String,
         headers: [String: String]?,
-        queryParameters: [String: String]?,
         body: Data?
     ) {
         let formattedHeaders = headers?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
-        let formattedQueryParameters = queryParameters?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
         let bodyString = body.flatMap { String(data: $0, encoding: .utf8) } ?? "None"
 
         let logMessage = """
@@ -130,9 +127,6 @@ public actor APIClient {
         URL: \(url.absoluteString)
         Headers: {
             \(formattedHeaders)
-        }
-        Query Parameters: {
-            \(formattedQueryParameters)
         }
         Body: \(bodyString)
         """
