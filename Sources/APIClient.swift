@@ -24,7 +24,7 @@ public actor APIClient {
     public func get<T: Decodable>(
         _ url: URL,
         headers: [String: String]? = nil
-    ) async throws -> T {
+    ) async throws(APIError) -> T {
         logRequest(
             url: url.absoluteString,
             method: "GET",
@@ -39,7 +39,7 @@ public actor APIClient {
         _ url: URL,
         body: U,
         headers: [String: String]? = nil
-    ) async throws -> T {
+    ) async throws(APIError) -> T {
         logRequest(
             url: url.absoluteString,
             method: "POST",
@@ -54,7 +54,7 @@ public actor APIClient {
         _ url: URL,
         body: U,
         headers: [String: String]? = nil
-    ) async throws -> T {
+    ) async throws(APIError) -> T {
         logRequest(
             url: url.absoluteString,
             method: "PATCH",
@@ -68,7 +68,7 @@ public actor APIClient {
     public func delete(
         _ url: URL,
         headers: [String: String]? = nil
-    ) async throws {
+    ) async throws(APIError) {
         logRequest(
             url: url.absoluteString,
             method: "DELETE",
@@ -83,15 +83,34 @@ public actor APIClient {
         url: URL,
         method: HTTPMethod,
         headers: [String: String]?
-    ) async throws {
+    ) async throws(APIError) {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
         
-        let (_, response) = try await session.data(for: request)
-        
-        if let httpResponse = response as? HTTPURLResponse, !(200..<300 ~= httpResponse.statusCode) {
-            throw APIError.invalidResponse
+        do {
+            let (_, response) = try await session.data(for: request)
+            
+            if let httpResponse = response as? HTTPURLResponse, !(200..<300 ~= httpResponse.statusCode) {
+                throw APIError.invalidResponse
+            }
+        } catch {
+            if let apiError = error as? APIError {
+                throw apiError
+            }
+            
+            if let urlError = error as? URLError {
+                switch urlError.code {
+                case .timedOut:
+                    throw APIError.networkError("The request timed out")
+                case .notConnectedToInternet:
+                    throw APIError.networkError("No internet connection")
+                default:
+                    throw APIError.networkError(urlError.localizedDescription)
+                }
+            }
+            
+            throw APIError.networkError(error.localizedDescription)
         }
     }
     
@@ -99,7 +118,7 @@ public actor APIClient {
         url: URL,
         method: HTTPMethod,
         headers: [String: String]?
-    ) async throws -> T {
+    ) async throws(APIError) -> T {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
@@ -111,33 +130,59 @@ public actor APIClient {
         method: HTTPMethod,
         body: U,
         headers: [String: String]?
-    ) async throws -> T {
+    ) async throws(APIError) -> T {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
-        request.httpBody = try JSONEncoder().encode(body)
+        
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+        } catch {
+            throw APIError.encodingError
+        }
+        
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await makeRequest(request, type: T.self)
     }
     
-    private func makeRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws -> T {
-        let (data, response) = try await session.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
-            throw APIError.invalidResponse
-        }
-        
+    private func makeRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws(APIError) -> T {
         do {
-            let parsedResponse = try CustomDecoder.main.decode(type, from: data)
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
+                // TODO: probably try to decode to Error type
+                throw APIError.invalidResponse
+            }
             
-            logResponse(
-                url: request.url?.absoluteString ?? "",
-                headers: httpResponse.allHeaderFields,
-                body: data,
-                statusCode: httpResponse.statusCode
-            )
-            return parsedResponse
+            do {
+                let parsedResponse = try CustomDecoder.main.decode(type, from: data)
+                
+                logResponse(
+                    url: request.url?.absoluteString ?? "",
+                    headers: httpResponse.allHeaderFields,
+                    body: data,
+                    statusCode: httpResponse.statusCode
+                )
+                return parsedResponse
+            } catch {
+                throw APIError.decodingError
+            }
         } catch {
-            throw APIError.decodingError
+            if let apiError = error as? APIError {
+                throw apiError
+            }
+            
+            if let urlError = error as? URLError {
+                switch urlError.code {
+                case .timedOut:
+                    throw APIError.networkError("The request timed out")
+                case .notConnectedToInternet:
+                    throw APIError.networkError("No internet connection")
+                default:
+                    throw APIError.networkError(urlError.localizedDescription)
+                }
+            }
+            
+            throw APIError.networkError(error.localizedDescription)
         }
     }
     
