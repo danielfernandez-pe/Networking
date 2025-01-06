@@ -26,7 +26,7 @@ public actor APIClient {
         headers: [String: String]? = nil
     ) async throws -> T {
         logRequest(
-            url: url,
+            url: url.absoluteString,
             method: "GET",
             headers: headers,
             body: nil
@@ -40,7 +40,14 @@ public actor APIClient {
         body: U,
         headers: [String: String]? = nil
     ) async throws -> T {
-        try await request(url: url, method: .POST, body: body, headers: headers)
+        logRequest(
+            url: url.absoluteString,
+            method: "POST",
+            headers: headers,
+            body: try? JSONEncoder().encode(body)
+        )
+        
+        return try await request(url: url, method: .POST, body: body, headers: headers)
     }
     
     public func patch<T: Decodable, U: Encodable>(
@@ -48,14 +55,28 @@ public actor APIClient {
         body: U,
         headers: [String: String]? = nil
     ) async throws -> T {
-        try await request(url: url, method: .PATCH, body: body, headers: headers)
+        logRequest(
+            url: url.absoluteString,
+            method: "PATCH",
+            headers: headers,
+            body: try? JSONEncoder().encode(body)
+        )
+        
+        return try await request(url: url, method: .PATCH, body: body, headers: headers)
     }
     
     public func delete(
         _ url: URL,
         headers: [String: String]? = nil
     ) async throws {
-        try await request(url: url, method: .DELETE, headers: headers)
+        logRequest(
+            url: url.absoluteString,
+            method: "DELETE",
+            headers: headers,
+            body: nil
+        )
+        
+        return try await request(url: url, method: .DELETE, headers: headers)
     }
     
     private func request(
@@ -106,25 +127,65 @@ public actor APIClient {
         }
         
         do {
-            return try CustomDecoder.main.decode(type, from: data)
+            let parsedResponse = try CustomDecoder.main.decode(type, from: data)
+            
+            logResponse(
+                url: request.url?.absoluteString ?? "",
+                headers: httpResponse.allHeaderFields,
+                body: data,
+                statusCode: httpResponse.statusCode
+            )
+            return parsedResponse
         } catch {
             throw APIError.decodingError
         }
     }
     
     private func logRequest(
-        url: URL,
+        url: String,
         method: String,
         headers: [String: String]?,
         body: Data?
     ) {
         let formattedHeaders = headers?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
-        let bodyString = body.flatMap { String(data: $0, encoding: .utf8) } ?? "None"
+        var bodyString = "None"
+        
+        if let body {
+            let jsonObject = try? JSONSerialization.jsonObject(with: body, options: [])
+            if let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]) {
+                bodyString = String(data: prettyData, encoding: .utf8) ?? ""
+            }
+        }
 
         let logMessage = """
         [HTTP Request]
         Method: \(method)
-        URL: \(url.absoluteString)
+        URL: \(url)
+        Headers: {
+            \(formattedHeaders)
+        }
+        Body: \(bodyString)
+        """
+        logger.info(logMessage)
+    }
+    
+    private func logResponse(
+        url: String,
+        headers: [AnyHashable: Any]?,
+        body: Data,
+        statusCode: Int
+    ) {
+        let formattedHeaders = headers?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
+        var bodyString = "None"
+        
+        let jsonObject = try? JSONSerialization.jsonObject(with: body, options: [])
+        if let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]) {
+            bodyString = String(data: prettyData, encoding: .utf8) ?? ""
+        }
+
+        let logMessage = """
+        [HTTP Response] \(statusCode)
+        URL: \(url)
         Headers: {
             \(formattedHeaders)
         }
