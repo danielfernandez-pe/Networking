@@ -12,7 +12,7 @@ let package = Package(
             targets: ["Networking"]),
     ],
     dependencies: [
-        .package(url: "git@github.com:danielfcodes/Logger.git", from: "1.2.1")
+        .package(url: "git@github.com:danielfernandez-pe/Logger.git", from: "1.2.1")
     ],
     targets: [
         .target(
