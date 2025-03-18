@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "logger",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:danielfernandez-pe/Logger.git",
+      "state" : {
+        "revision" : "df751da5788354347c3cf1a1679ae2d3c2f3e871",
+        "version" : "1.2.1"
+      }
+    }
+  ],
+  "version" : 2
+}

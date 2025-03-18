@@ -8,7 +8,7 @@
 import Foundation
 
 struct CustomDecoder {
-    static var main: JSONDecoder = {
+    static let main: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .useDefaultKeys
         decoder.dataDecodingStrategy = .deferredToData

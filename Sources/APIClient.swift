@@ -34,6 +34,21 @@ public actor APIClient {
 
         return try await request(url: url, method: .GET, headers: headers)
     }
+
+    public func post<U: Encodable>(
+        _ url: URL,
+        body: U,
+        headers: [String: String]? = nil
+    ) async throws(APIError) {
+        logRequest(
+            url: url.absoluteString,
+            method: "POST",
+            headers: headers,
+            body: try? JSONEncoder().encode(body)
+        )
+        
+        return try await request(url: url, method: .POST, body: body, headers: headers)
+    }
     
     public func post<T: Decodable, U: Encodable>(
         _ url: URL,
@@ -76,17 +91,26 @@ public actor APIClient {
             body: nil
         )
         
-        return try await request(url: url, method: .DELETE, headers: headers)
+        return try await request(url: url, method: .DELETE, body: EmptyBody.empty, headers: headers)
     }
-    
-    private func request(
+
+    private func request<T: Encodable>(
         url: URL,
         method: HTTPMethod,
+        body: T? = nil,
         headers: [String: String]?
     ) async throws(APIError) {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
+        
+        if let body {
+            do {
+                request.httpBody = try JSONEncoder().encode(body)
+            } catch {
+                throw APIError.encodingError
+            }
+        }
         
         do {
             let (_, response) = try await session.data(for: request)
@@ -237,5 +261,11 @@ public actor APIClient {
         Body: \(bodyString)
         """
         logger.info(logMessage)
+    }
+}
+
+extension APIClient {
+    struct EmptyBody: Encodable {
+        static var empty: EmptyBody { .init() }
     }
 }
