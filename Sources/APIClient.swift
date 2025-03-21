@@ -21,6 +21,17 @@ public actor APIClient {
         self.logger = logger
     }
     
+    ///
+    /// Use this method to make a GET request to the server and get a response that
+    /// conforms to Decodable.
+    ///
+    /// Parameters:
+    /// - url: The URL to make the request to.
+    /// - headers: The headers to include in the request.
+    ///
+    /// Throws:
+    /// - APIError: If there is an error with the request. APIError are generic errors that come from server responses.
+    ///
     public func get<T: Decodable>(
         _ url: URL,
         headers: [String: String]? = nil
@@ -35,6 +46,17 @@ public actor APIClient {
         return try await request(url: url, method: .GET, headers: headers)
     }
 
+    ///
+    /// Use this method to make a POST request to the server an expect no response. E.g. creating a resource.
+    ///
+    /// Parameters:
+    /// - url: The URL to make the request to.
+    /// - body: The body to include in the request. It has to conform to Encodable.
+    /// - headers: The headers to include in the request.
+    ///
+    /// Throws:
+    /// - APIError: If there is an error with the request. APIError are generic errors that come from server responses.
+    ///
     public func post<U: Encodable>(
         _ url: URL,
         body: U,
@@ -50,6 +72,18 @@ public actor APIClient {
         return try await request(url: url, method: .POST, body: body, headers: headers)
     }
     
+    ///
+    /// Use this method to make a POST request to the server and get a response that
+    /// conforms to Decodable.
+    ///
+    /// Parameters:
+    /// - url: The URL to make the request to.
+    /// - body: The body to include in the request. It has to conform to Encodable.
+    /// - headers: The headers to include in the request.
+    ///
+    /// Throws:
+    /// - APIError: If there is an error with the request. APIError are generic errors that come from server responses.
+    ///
     public func post<T: Decodable, U: Encodable>(
         _ url: URL,
         body: U,
@@ -65,6 +99,18 @@ public actor APIClient {
         return try await request(url: url, method: .POST, body: body, headers: headers)
     }
     
+    ///
+    /// Use this method to make a PATCH request to the server and get a response that
+    /// conforms to Decodable.
+    ///
+    /// Parameters:
+    /// - url: The URL to make the request to.
+    /// - body: The body to include in the request. It has to conform to Encodable.
+    /// - headers: The headers to include in the request.
+    ///
+    /// Throws:
+    /// - APIError: If there is an error with the request. APIError are generic errors that come from server responses.
+    ///
     public func patch<T: Decodable, U: Encodable>(
         _ url: URL,
         body: U,
@@ -80,6 +126,17 @@ public actor APIClient {
         return try await request(url: url, method: .PATCH, body: body, headers: headers)
     }
     
+    ///
+    /// Use this method to make a DELETE request to the server and expect no response.
+    ///
+    /// Parameters:
+    /// - url: The URL to make the request to.
+    /// - body: The body to include in the request. It has to conform to Encodable.
+    /// - headers: The headers to include in the request.
+    ///
+    /// Throws:
+    /// - APIError: If there is an error with the request. APIError are generic errors that come from server responses.
+    ///
     public func delete(
         _ url: URL,
         headers: [String: String]? = nil
@@ -94,6 +151,10 @@ public actor APIClient {
         return try await request(url: url, method: .DELETE, body: EmptyBody.empty, headers: headers)
     }
 
+    ///
+    /// Use this method where there is no response (e.g. creating or deleting a resource).
+    /// This method doesn't have the Decodable generic so it's easier to call within methods than expect no response.
+    ///
     private func request<T: Encodable>(
         url: URL,
         method: HTTPMethod,
@@ -138,6 +199,10 @@ public actor APIClient {
         }
     }
     
+    ///
+    /// Use this method where there is no body (e.g. GET request).
+    /// This method doesn't have the Encodable generic so it's easier to call within methods than no need a `body` parameter.
+    ///
     private func request<T: Decodable>(
         url: URL,
         method: HTTPMethod,
@@ -149,6 +214,9 @@ public actor APIClient {
         return try await makeRequest(request, type: T.self)
     }
     
+    ///
+    /// Generic request method that can be used for any HTTP method.
+    ///
     private func request<T: Decodable, U: Encodable>(
         url: URL,
         method: HTTPMethod,
@@ -169,6 +237,11 @@ public actor APIClient {
         return try await makeRequest(request, type: T.self)
     }
     
+    ///
+    /// The actual request to the server.
+    ///
+    /// Here there will be a basic error handling, log response and parse the data.
+    ///
     private func makeRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws(APIError) -> T {
         do {
             let (data, response) = try await session.data(for: request)
@@ -219,8 +292,7 @@ public actor APIClient {
         let formattedHeaders = headers?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
         var bodyString = "None"
         
-        if let body {
-            let jsonObject = try? JSONSerialization.jsonObject(with: body, options: [])
+        if let body, let jsonObject = try? JSONSerialization.jsonObject(with: body, options: []) {
             if let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]) {
                 bodyString = String(data: prettyData, encoding: .utf8) ?? ""
             }
@@ -247,8 +319,8 @@ public actor APIClient {
         let formattedHeaders = headers?.map { "\"\($0.key)\": \"\($0.value)\"" }.joined(separator: ", ") ?? "None"
         var bodyString = "None"
         
-        let jsonObject = try? JSONSerialization.jsonObject(with: body, options: [])
-        if let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]) {
+        if let jsonObject = try? JSONSerialization.jsonObject(with: body, options: []),
+           let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: [.prettyPrinted]) {
             bodyString = String(data: prettyData, encoding: .utf8) ?? ""
         }
 
