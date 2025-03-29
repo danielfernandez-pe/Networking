@@ -6,13 +6,12 @@
 //
 
 import Foundation
-import Lumberjack
 
 public actor APIClient {
     private let session: URLSession
-    private let logger: LumberjackCoordinator
+    private let logger: NetworkLogging?
     
-    public init(logger: LumberjackCoordinator) {
+    public init(logger: NetworkLogging? = nil) {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
         configuration.timeoutIntervalForRequest = 30
@@ -307,7 +306,7 @@ public actor APIClient {
         }
         Body: \(bodyString)
         """
-        logger.info(logMessage)
+        logger?.log(logMessage)
     }
     
     private func logResponse(
@@ -332,7 +331,7 @@ public actor APIClient {
         }
         Body: \(bodyString)
         """
-        logger.info(logMessage)
+        logger?.log(logMessage)
     }
 }
 
