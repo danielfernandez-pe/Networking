@@ -232,7 +232,6 @@ public actor APIClient {
             throw APIError.encodingError
         }
         
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         return try await makeRequest(request, type: T.self)
     }
     
