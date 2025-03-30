@@ -9,6 +9,8 @@ public enum APIError: Error, CustomStringConvertible {
     case decodingError
     case encodingError
     case invalidResponse
+    case notAuthorized
+    case notFound
     case networkError(String)
     
     public var description: String {
@@ -19,6 +21,10 @@ public enum APIError: Error, CustomStringConvertible {
             return "The body to send cannot be encoded properly"
         case .invalidResponse:
             return "Backend sent invalid response"
+        case .notAuthorized:
+            return "Not authorized"
+        case .notFound:
+            return "Server returned 404. Resource not found"
         case .networkError(let desc):
             return desc
         }

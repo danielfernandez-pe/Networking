@@ -174,10 +174,7 @@ public actor APIClient {
         
         do {
             let (_, response) = try await session.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse, !(200..<300 ~= httpResponse.statusCode) {
-                throw APIError.invalidResponse
-            }
+            try checkResponse(response: response)
         } catch {
             if let apiError = error as? APIError {
                 throw apiError
@@ -243,10 +240,8 @@ public actor APIClient {
     private func makeRequest<T: Decodable>(_ request: URLRequest, type: T.Type) async throws(APIError) -> T {
         do {
             let (data, response) = try await session.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
-                // TODO: probably try to decode to Error type
-                throw APIError.invalidResponse
-            }
+            
+            let httpResponse = try checkResponse(response: response)
             
             do {
                 let parsedResponse = try CustomDecoder.main.decode(type, from: data)
@@ -279,6 +274,31 @@ public actor APIClient {
             
             throw APIError.networkError(error.localizedDescription)
         }
+    }
+    
+    @discardableResult
+    private func checkResponse(response: URLResponse) throws -> HTTPURLResponse {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200..<300:
+            // Success case, continue processing
+            break
+        case 401:
+            throw APIError.notAuthorized
+        case 403:
+            throw APIError.notAuthorized
+        case 404:
+            throw APIError.notFound
+        case 500..<600:
+            throw APIError.networkError("Server error, Status code: \(httpResponse.statusCode)")
+        default:
+            throw APIError.networkError("Network error, Status code: \(httpResponse.statusCode)")
+        }
+        
+        return httpResponse
     }
     
     private func logRequest(
