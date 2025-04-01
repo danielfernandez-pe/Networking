@@ -5,6 +5,10 @@
 //  Created by Daniel Fernandez Yopla on 28.12.2024.
 //
 
+public protocol BackendErrorResponse: Sendable {
+    var message: String { get }
+}
+
 public enum APIError: Error, CustomStringConvertible {
     case decodingError
     case encodingError
@@ -12,6 +16,7 @@ public enum APIError: Error, CustomStringConvertible {
     case notAuthorized
     case notFound
     case networkError(String)
+    case backendError(BackendErrorResponse)
     
     public var description: String {
         switch self {
@@ -27,6 +32,8 @@ public enum APIError: Error, CustomStringConvertible {
             return "Server returned 404. Resource not found"
         case .networkError(let desc):
             return desc
+        case .backendError(let error):
+            return error.message
         }
     }
 }

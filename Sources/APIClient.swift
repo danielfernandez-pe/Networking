@@ -9,14 +9,16 @@ import Foundation
 
 public actor APIClient {
     private let session: URLSession
+    private let errorParser: any ErrorParserType
     private let logger: NetworkLogging?
     
-    public init(logger: NetworkLogging? = nil) {
+    public init(errorParser: (some ErrorParserType)?, logger: NetworkLogging? = nil) {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
         configuration.timeoutIntervalForRequest = 30
         
         session = URLSession(configuration: configuration)
+        self.errorParser = errorParser ?? DefaultErrorParser()
         self.logger = logger
     }
     
@@ -174,7 +176,7 @@ public actor APIClient {
         
         do {
             let (_, response) = try await session.data(for: request)
-            try checkResponse(response: response)
+            try checkResponse(response: response, data: nil)
         } catch {
             if let apiError = error as? APIError {
                 throw apiError
@@ -241,7 +243,7 @@ public actor APIClient {
         do {
             let (data, response) = try await session.data(for: request)
             
-            let httpResponse = try checkResponse(response: response)
+            let httpResponse = try checkResponse(response: response, data: data)
             
             do {
                 let parsedResponse = try CustomDecoder.main.decode(type, from: data)
@@ -277,27 +279,30 @@ public actor APIClient {
     }
     
     @discardableResult
-    private func checkResponse(response: URLResponse) throws -> HTTPURLResponse {
+    private func checkResponse(response: URLResponse, data: Data?) throws -> HTTPURLResponse {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
-
-        switch httpResponse.statusCode {
-        case 200..<300:
-            // Success case, continue processing
-            break
-        case 401:
-            throw APIError.notAuthorized
-        case 403:
-            throw APIError.notAuthorized
-        case 404:
-            throw APIError.notFound
-        case 500..<600:
-            throw APIError.networkError("Server error, Status code: \(httpResponse.statusCode)")
-        default:
-            throw APIError.networkError("Network error, Status code: \(httpResponse.statusCode)")
-        }
         
+        if !(200...299).contains(httpResponse.statusCode) {
+            if let data = data, let error = errorParser.parse(data: data) {
+                throw APIError.backendError(error)
+            } else {
+                switch httpResponse.statusCode {
+                case 401:
+                    throw APIError.notAuthorized
+                case 403:
+                    throw APIError.notAuthorized
+                case 404:
+                    throw APIError.notFound
+                case 500..<600:
+                    throw APIError.networkError("Server error, Status code: \(httpResponse.statusCode)")
+                default:
+                    throw APIError.networkError("Network error, Status code: \(httpResponse.statusCode)")
+                }
+            }
+        }
+
         return httpResponse
     }
     
