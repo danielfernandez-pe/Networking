@@ -5,9 +5,7 @@
 //  Created by Daniel Fernandez Yopla on 28.12.2024.
 //
 
-public protocol BackendErrorResponse: Sendable {
-    var message: String { get }
-}
+import Foundation
 
 public enum APIError: Error, CustomStringConvertible {
     case decodingError
@@ -16,7 +14,7 @@ public enum APIError: Error, CustomStringConvertible {
     case notAuthorized
     case notFound
     case networkError(String)
-    case backendError(BackendErrorResponse)
+    case backendError(LocalizedError)
     
     public var description: String {
         switch self {
@@ -33,7 +31,7 @@ public enum APIError: Error, CustomStringConvertible {
         case .networkError(let desc):
             return desc
         case .backendError(let error):
-            return error.message
+            return error.errorDescription ?? "Unkown backend error"
         }
     }
 }

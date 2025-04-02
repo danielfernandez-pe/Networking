@@ -8,11 +8,11 @@
 import Foundation
 
 public protocol ErrorParserType {
-    func parse(data: Data) -> BackendErrorResponse?
+    func parse(data: Data) -> LocalizedError?
 }
 
 public final class DefaultErrorParser: ErrorParserType {
-    public func parse(data: Data) -> BackendErrorResponse? {
+    public func parse(data: Data) -> LocalizedError? {
         // this method should be implemented on client apps
         nil
     }
