@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum APIError: Error, CustomStringConvertible {
+public enum APIError: Error, CustomStringConvertible, LocalizedError {
     case decodingError
     case encodingError
     case invalidResponse
@@ -16,6 +16,7 @@ public enum APIError: Error, CustomStringConvertible {
     case networkError(String)
     case backendError(LocalizedError)
     
+    // This description comes from CustomStringConvertible which help when you print or log the errors
     public var description: String {
         switch self {
         case .decodingError:
@@ -33,5 +34,10 @@ public enum APIError: Error, CustomStringConvertible {
         case .backendError(let error):
             return error.errorDescription ?? "Unkown backend error"
         }
+    }
+    
+    // This errorDescription comes from LocalizedError which help when you put error.localizedDescription in the viewModels
+    public var errorDescription: String? {
+        description
     }
 }
