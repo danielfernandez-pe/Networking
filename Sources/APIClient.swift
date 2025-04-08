@@ -176,6 +176,12 @@ public actor APIClient {
         
         do {
             let (_, response) = try await session.data(for: request)
+            logResponse(
+                url: request.url?.absoluteString ?? "",
+                headers: (response as? HTTPURLResponse)?.allHeaderFields,
+                body: Data(),
+                statusCode: (response as? HTTPURLResponse)?.statusCode ?? 1_000
+            )
             try checkResponse(response: response, data: nil)
         } catch {
             if let apiError = error as? APIError {
@@ -243,17 +249,17 @@ public actor APIClient {
         do {
             let (data, response) = try await session.data(for: request)
             
+            logResponse(
+                url: request.url?.absoluteString ?? "",
+                headers: (response as? HTTPURLResponse)?.allHeaderFields,
+                body: data,
+                statusCode: (response as? HTTPURLResponse)?.statusCode ?? 1_000
+            )
+            
             let httpResponse = try checkResponse(response: response, data: data)
             
             do {
                 let parsedResponse = try CustomDecoder.main.decode(type, from: data)
-                
-                logResponse(
-                    url: request.url?.absoluteString ?? "",
-                    headers: httpResponse.allHeaderFields,
-                    body: data,
-                    statusCode: httpResponse.statusCode
-                )
                 return parsedResponse
             } catch {
                 throw APIError.decodingError
