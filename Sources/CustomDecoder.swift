@@ -12,6 +12,7 @@ struct CustomDecoder {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .useDefaultKeys
         decoder.dataDecodingStrategy = .deferredToData
+        decoder.dateDecodingStrategy = .iso8601
         
         decoder.userInfo = [
             CodingUserInfoKey(rawValue: "caseInsensitiveEnumDecoding")!: true

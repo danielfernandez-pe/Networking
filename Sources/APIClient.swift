@@ -256,7 +256,7 @@ public actor APIClient {
                 statusCode: (response as? HTTPURLResponse)?.statusCode ?? 1_000
             )
             
-            let httpResponse = try checkResponse(response: response, data: data)
+            let _ = try checkResponse(response: response, data: data)
             
             do {
                 let parsedResponse = try CustomDecoder.main.decode(type, from: data)
