@@ -10,15 +10,21 @@ import Foundation
 public actor APIClient {
     private let session: URLSession
     private let errorParser: any ErrorParserType
+    private let authMiddleware: any AuthMiddlewareType
     private let logger: NetworkLogging?
     
-    public init(errorParser: (some ErrorParserType)?, logger: NetworkLogging? = nil) {
+    public init(
+        errorParser: (some ErrorParserType)?,
+        authMiddleware: (some AuthMiddlewareType)?,
+        logger: NetworkLogging? = nil,
+    ) {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
         configuration.timeoutIntervalForRequest = 30
         
         session = URLSession(configuration: configuration)
         self.errorParser = errorParser ?? DefaultErrorParser()
+        self.authMiddleware = authMiddleware ?? DefaultAuthMiddleware()
         self.logger = logger
     }
     
@@ -296,6 +302,7 @@ public actor APIClient {
             } else {
                 switch httpResponse.statusCode {
                 case 401:
+                    authMiddleware.onNonAuthenticatedRequest()
                     throw APIError.notAuthorized
                 case 403:
                     throw APIError.notAuthorized
