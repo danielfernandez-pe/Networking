@@ -12,11 +12,13 @@ public actor APIClient {
     private let errorParser: any ErrorParserType
     private let authMiddleware: any AuthMiddlewareType
     private let logger: NetworkLogging?
+    private let customEncoder: JSONEncoder
     
     public init(
         errorParser: (some ErrorParserType)?,
         authMiddleware: (some AuthMiddlewareType)?,
         logger: NetworkLogging? = nil,
+        customEncoder: JSONEncoder? = nil
     ) {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
@@ -26,6 +28,7 @@ public actor APIClient {
         self.errorParser = errorParser ?? DefaultErrorParser()
         self.authMiddleware = authMiddleware ?? DefaultAuthMiddleware()
         self.logger = logger
+        self.customEncoder = customEncoder ?? JSONEncoder()
     }
     
     ///
@@ -73,7 +76,7 @@ public actor APIClient {
             url: url.absoluteString,
             method: "POST",
             headers: headers,
-            body: try? JSONEncoder().encode(body)
+            body: try? customEncoder.encode(body)
         )
         
         return try await request(url: url, method: .POST, body: body, headers: headers)
@@ -100,7 +103,7 @@ public actor APIClient {
             url: url.absoluteString,
             method: "POST",
             headers: headers,
-            body: try? JSONEncoder().encode(body)
+            body: try? customEncoder.encode(body)
         )
         
         return try await request(url: url, method: .POST, body: body, headers: headers)
@@ -127,7 +130,7 @@ public actor APIClient {
             url: url.absoluteString,
             method: "PATCH",
             headers: headers,
-            body: try? JSONEncoder().encode(body)
+            body: try? customEncoder.encode(body)
         )
         
         return try await request(url: url, method: .PATCH, body: body, headers: headers)
@@ -174,7 +177,7 @@ public actor APIClient {
         
         if let body {
             do {
-                request.httpBody = try JSONEncoder().encode(body)
+                request.httpBody = try customEncoder.encode(body)
             } catch {
                 throw APIError.encodingError
             }
@@ -238,7 +241,7 @@ public actor APIClient {
         request.allHTTPHeaderFields = headers
         
         do {
-            request.httpBody = try JSONEncoder().encode(body)
+            request.httpBody = try customEncoder.encode(body)
         } catch {
             throw APIError.encodingError
         }
