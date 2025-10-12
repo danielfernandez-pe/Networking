@@ -8,21 +8,35 @@ let package = Package(
     platforms: [.iOS(.v18)],
     products: [
         .library(
-            name: "Networking",
-            targets: ["Networking"]),
+            name: "RESTClient",
+            targets: ["RESTClient"]
+        ),
+        .library(
+            name: "FirebaseClient",
+            targets: ["FirebaseClient"]
+        )
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "12.4.0"),
+    ],
     targets: [
         .target(
-            name: "Networking",
+            name: "RESTClient",
             dependencies: [],
-            path: "Sources",
+            path: "Sources/REST",
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
-        .testTarget(
-            name: "NetworkingTests",
-            dependencies: ["Networking"]),
+        .target(
+            name: "FirebaseClient",
+            dependencies: [
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk")
+            ],
+            path: "Sources/Firebase",
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
+        )
     ]
 )
