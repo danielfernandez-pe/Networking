@@ -8,12 +8,12 @@ let package = Package(
     platforms: [.iOS(.v18)],
     products: [
         .library(
-            name: "RESTClient",
-            targets: ["RESTClient"]
+            name: "RESTNetworking",
+            targets: ["RESTNetworking"]
         ),
         .library(
-            name: "FirebaseClient",
-            targets: ["FirebaseClient"]
+            name: "FirebaseNetworking",
+            targets: ["FirebaseNetworking"]
         )
     ],
     dependencies: [
@@ -21,7 +21,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "RESTClient",
+            name: "RESTNetworking",
             dependencies: [],
             path: "Sources/REST",
             swiftSettings: [
@@ -29,7 +29,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "FirebaseClient",
+            name: "FirebaseNetworking",
             dependencies: [
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk")
             ],

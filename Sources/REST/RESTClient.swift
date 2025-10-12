@@ -1,5 +1,5 @@
 //
-//  APIClient.swift
+//  RESTClient.swift
 //  Networking
 //
 //  Created by Daniel Fernandez Yopla on 28.12.2024.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public actor APIClient {
+public actor RESTClient {
     private let session: URLSession
     private let errorParser: any ErrorParserType
     private let authMiddleware: any AuthMiddlewareType
@@ -375,7 +375,7 @@ public actor APIClient {
     }
 }
 
-extension APIClient {
+extension RESTClient {
     struct EmptyBody: Encodable {
         static var empty: EmptyBody { .init() }
     }

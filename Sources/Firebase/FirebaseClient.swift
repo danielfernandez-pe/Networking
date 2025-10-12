@@ -1,5 +1,5 @@
 //
-//  APIClient.swift
+//  FirebaseClient.swift
 //  Networking
 //
 //  Created by Daniel Fernandez Yopla on 12.10.2025.
@@ -7,7 +7,7 @@
 
 import FirebaseFirestore
 
-public actor APIClient {
+public actor FirebaseClient {
     private let db = Firestore.firestore()
 
     public init() {}
@@ -28,7 +28,10 @@ public actor APIClient {
     ) async throws(APIError) -> [T] {
         do {
             let snapshot = try await db.collection(path).getDocuments()
-            let data = try snapshot.documents.map { try $0.data(as: T.self) }
+            let data = try snapshot.documents.map {
+                let data = $0.data()
+                return try $0.data(as: T.self)
+            }
             return data
         } catch {
             throw APIError.decodingError
