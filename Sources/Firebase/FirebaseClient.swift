@@ -24,11 +24,27 @@ public actor FirebaseClient {
     }
     
     public func getItems<T: Decodable>(
-        path: String
+        path: String,
+        queries: [QueryType] = []
     ) async throws(APIError) -> [T] {
         do {
-            let snapshot = try await db.collection(path).getDocuments()
-            let data = try snapshot.documents.map { try $0.data(as: T.self) }
+            var snapshot: Query = db.collection(path)
+            
+            for query in queries {
+                switch query {
+                case .isEqualTo(let field, let value):
+                    snapshot = snapshot.whereField(field, isEqualTo: value)
+                case .isNotEqualTo(let field, let value):
+                    snapshot = snapshot.whereField(field, isNotEqualTo: value)
+                case .isGreaterThan(let field, let value):
+                    snapshot = snapshot.whereField(field, isGreaterThan: value)
+                case .isLessThan(let field, let value):
+                    snapshot = snapshot.whereField(field, isLessThan: value)
+                }
+            }
+            
+            let collection = try await snapshot.getDocuments()
+            let data = try collection.documents.map { try $0.data(as: T.self) }
             return data
         } catch {
             throw APIError.decodingError
