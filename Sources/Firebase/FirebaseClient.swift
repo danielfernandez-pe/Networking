@@ -50,4 +50,23 @@ public actor FirebaseClient {
             throw APIError.decodingError
         }
     }
+    
+    public func setData<T: Encodable & Identifiable>(
+        path: String,
+        model: T
+    ) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            do {
+                try db.collection(path).document("\(model.id)").setData(from: model) { error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
 }
