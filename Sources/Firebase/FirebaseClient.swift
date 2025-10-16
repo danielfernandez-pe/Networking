@@ -9,8 +9,11 @@ import FirebaseFirestore
 
 public actor FirebaseClient {
     private let db = Firestore.firestore()
+    private let decoder = Firestore.Decoder()
 
-    public init() {}
+    public init() {
+        decoder.dateDecodingStrategy = .iso8601
+    }
 
     public func getItem<T: Decodable>(
         path: String
@@ -44,7 +47,7 @@ public actor FirebaseClient {
             }
             
             let collection = try await snapshot.getDocuments()
-            let data = try collection.documents.map { try $0.data(as: T.self) }
+            let data = try collection.documents.map { try $0.data(as: T.self, decoder: decoder) }
             return data
         } catch {
             throw APIError.decodingError
