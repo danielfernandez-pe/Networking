@@ -15,8 +15,8 @@ public actor RESTClient {
     private let customEncoder: JSONEncoder
     
     public init(
-        errorParser: (some ErrorParserType)?,
-        authMiddleware: (some AuthMiddlewareType)?,
+        errorParser: (any ErrorParserType)?,
+        authMiddleware: (any AuthMiddlewareType)?,
         logger: NetworkLogging? = nil,
         customEncoder: JSONEncoder? = nil
     ) {

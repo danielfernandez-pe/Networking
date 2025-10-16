@@ -31,7 +31,8 @@ let package = Package(
         .target(
             name: "FirebaseNetworking",
             dependencies: [
-                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk")
+                .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseAuth", package: "firebase-ios-sdk")
             ],
             path: "Sources/Firebase",
             swiftSettings: [

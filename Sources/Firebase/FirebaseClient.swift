@@ -6,8 +6,10 @@
 //
 
 import FirebaseFirestore
+import FirebaseAuth
 
 public actor FirebaseClient {
+    private let auth = Auth.auth()
     private let db = Firestore.firestore()
     private let decoder = Firestore.Decoder()
 
@@ -15,6 +17,26 @@ public actor FirebaseClient {
         decoder.dateDecodingStrategy = .iso8601
     }
 
+    ///
+    /// Returns: User Id
+    ///
+    public func signUp(withEmail email: String, password: String) async throws -> String {
+        let authResult = try await auth.createUser(withEmail: email, password: password)
+        return authResult.user.uid
+    }
+    
+    ///
+    /// Returns: User Id
+    ///
+    public func signIn(withEmail email: String, password: String) async throws -> String {
+        let authResult = try await auth.signIn(withEmail: email, password: password)
+        return authResult.user.uid
+    }
+    
+    public func signOut() throws {
+        try auth.signOut()
+    }
+    
     public func getItem<T: Decodable>(
         path: String
     ) async throws(APIError) -> T {
