@@ -10,12 +10,14 @@ import Foundation
 public actor RESTClient {
     private let session: URLSession
     private let errorParser: any ErrorParserType
+    private let headersMiddleware: any HeadersMiddlewareType
     private let authMiddleware: any AuthMiddlewareType
     private let logger: NetworkLogging?
     private let customEncoder: JSONEncoder
     
     public init(
         errorParser: (any ErrorParserType)?,
+        headersMiddleware: (any HeadersMiddlewareType)?,
         authMiddleware: (any AuthMiddlewareType)?,
         logger: NetworkLogging? = nil,
         customEncoder: JSONEncoder? = nil
@@ -26,6 +28,7 @@ public actor RESTClient {
         
         session = URLSession(configuration: configuration)
         self.errorParser = errorParser ?? DefaultErrorParser()
+        self.headersMiddleware = headersMiddleware ?? DefaultHeadersMiddleware()
         self.authMiddleware = authMiddleware ?? DefaultAuthMiddleware()
         self.logger = logger
         self.customEncoder = customEncoder ?? JSONEncoder()
@@ -173,7 +176,7 @@ public actor RESTClient {
     ) async throws(APIError) {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.allHTTPHeaderFields = headers
+        request.allHTTPHeaderFields = getHeaders(customHeaders: headers)
         
         if let body {
             do {
@@ -223,7 +226,7 @@ public actor RESTClient {
     ) async throws(APIError) -> T {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.allHTTPHeaderFields = headers
+        request.allHTTPHeaderFields = getHeaders(customHeaders: headers)
         return try await makeRequest(request, type: T.self)
     }
     
@@ -238,7 +241,7 @@ public actor RESTClient {
     ) async throws(APIError) -> T {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.allHTTPHeaderFields = headers
+        request.allHTTPHeaderFields = getHeaders(customHeaders: headers)
         
         do {
             request.httpBody = try customEncoder.encode(body)
@@ -322,6 +325,10 @@ public actor RESTClient {
         return httpResponse
     }
     
+    private func getHeaders(customHeaders: [String: String]? = nil) -> [String: String] {
+        headersMiddleware.defaultHeaders().merging(customHeaders ?? [:]) { _, new in new }
+    }
+
     private func logRequest(
         url: String,
         method: String,
