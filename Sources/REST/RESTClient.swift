@@ -14,13 +14,15 @@ public actor RESTClient {
     private let authMiddleware: any AuthMiddlewareType
     private let logger: NetworkLogging?
     private let customEncoder: JSONEncoder
+    private let customDecoder: JSONDecoder
     
     public init(
         errorParser: (any ErrorParserType)?,
         headersMiddleware: (any HeadersMiddlewareType)?,
         authMiddleware: (any AuthMiddlewareType)?,
         logger: NetworkLogging? = nil,
-        customEncoder: JSONEncoder? = nil
+        customEncoder: JSONEncoder? = nil,
+        customDecoder: JSONDecoder? = nil
     ) {
         let configuration = URLSessionConfiguration.default
         configuration.waitsForConnectivity = true
@@ -32,6 +34,7 @@ public actor RESTClient {
         self.authMiddleware = authMiddleware ?? DefaultAuthMiddleware()
         self.logger = logger
         self.customEncoder = customEncoder ?? JSONEncoder()
+        self.customDecoder = customDecoder ?? CustomDecoder.main
     }
     
     ///
@@ -271,7 +274,7 @@ public actor RESTClient {
             let _ = try checkResponse(response: response, data: data)
             
             do {
-                let parsedResponse = try CustomDecoder.main.decode(type, from: data)
+                let parsedResponse = try customDecoder.decode(type, from: data)
                 return parsedResponse
             } catch {
                 throw APIError.decodingError
