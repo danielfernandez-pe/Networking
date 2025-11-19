@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -25,7 +25,9 @@ let package = Package(
             dependencies: [],
             path: "Sources/REST",
             swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
+                .enableExperimentalFeature("StrictConcurrency"),
+                .enableUpcomingFeature("InferIsolatedConformances"),
+                .enableUpcomingFeature("NonisolatedNonsendingByDefault")
             ]
         ),
         .target(
@@ -36,7 +38,9 @@ let package = Package(
             ],
             path: "Sources/Firebase",
             swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
+                .enableExperimentalFeature("StrictConcurrency"),
+                .enableUpcomingFeature("InferIsolatedConformances"),
+                .enableUpcomingFeature("NonisolatedNonsendingByDefault")
             ]
         )
     ]
