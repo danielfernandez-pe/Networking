@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol ErrorParserType {
+public protocol ErrorParserType: Sendable {
     func parse(data: Data) -> LocalizedError?
 }
 

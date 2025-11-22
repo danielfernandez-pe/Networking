@@ -5,7 +5,7 @@
 //  Created by Daniel Fernandez Yopla on 30.07.2025.
 //
 
-public protocol AuthMiddlewareType {
+public protocol AuthMiddlewareType: Sendable {
     /// This method is called when networking gets 401
     func onNonAuthenticatedRequest()
 }

@@ -179,7 +179,7 @@ public actor RESTClient {
     ) async throws(APIError) {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.allHTTPHeaderFields = getHeaders(customHeaders: headers)
+        request.allHTTPHeaderFields = await getHeaders(customHeaders: headers)
         
         if let body {
             do {
@@ -229,7 +229,7 @@ public actor RESTClient {
     ) async throws(APIError) -> T {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.allHTTPHeaderFields = getHeaders(customHeaders: headers)
+        request.allHTTPHeaderFields = await getHeaders(customHeaders: headers)
         return try await makeRequest(request, type: T.self)
     }
     
@@ -244,7 +244,7 @@ public actor RESTClient {
     ) async throws(APIError) -> T {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.allHTTPHeaderFields = getHeaders(customHeaders: headers)
+        request.allHTTPHeaderFields = await getHeaders(customHeaders: headers)
         
         do {
             request.httpBody = try customEncoder.encode(body)
@@ -328,8 +328,8 @@ public actor RESTClient {
         return httpResponse
     }
     
-    private func getHeaders(customHeaders: [String: String]? = nil) -> [String: String] {
-        headersMiddleware.defaultHeaders().merging(customHeaders ?? [:]) { _, new in new }
+    private func getHeaders(customHeaders: [String: String]? = nil) async -> [String: String] {
+        await headersMiddleware.defaultHeaders().merging(customHeaders ?? [:]) { _, new in new }
     }
 
     private func logRequest(
