@@ -82,6 +82,7 @@ public actor FirebaseClient {
     ) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             do {
+                
                 try db.collection(path).document("\(model.id)").setData(from: model) { error in
                     if let error = error {
                         continuation.resume(throwing: error)
@@ -91,6 +92,24 @@ public actor FirebaseClient {
                 }
             } catch {
                 continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func addListener<T: Decodable & Sendable>(path: String) -> AsyncStream<T> {
+        AsyncStream<T> { continuation in
+            db.document(path).addSnapshotListener { snapshot, error in
+                guard let document = snapshot else {
+                  print("Error fetching document: \(error!)")
+                  return
+                }
+
+                do {
+                    let data = try document.data(as: T.self)
+                    continuation.yield(data)
+                } catch {
+                    print("Decoding error while listening to \(path): \(error)")
+                }
             }
         }
     }
