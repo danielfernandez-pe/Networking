@@ -96,9 +96,14 @@ public actor FirebaseClient {
         }
     }
     
+    ///
+    /// Note: Remember to always cancel() this task when stop listening to updates in order to release Firebase listener.
+    ///
     public func addListener<T: Decodable & Sendable>(path: String) -> AsyncStream<T> {
-        AsyncStream<T> { continuation in
-            db.document(path).addSnapshotListener { snapshot, error in
+        let box = Box()
+        
+        return AsyncStream<T> { continuation in
+            box.reg = db.document(path).addSnapshotListener { snapshot, error in
                 guard let document = snapshot else {
                   print("Error fetching document: \(error!)")
                   return
@@ -111,6 +116,16 @@ public actor FirebaseClient {
                     print("Decoding error while listening to \(path): \(error)")
                 }
             }
+            
+            continuation.onTermination = { @Sendable _ in
+                box.reg?.remove()
+                box.reg = nil
+            }
         }
     }
+}
+
+// We added this so we can remove the registration inside the @Sendable closure of onTermination
+final class Box: @unchecked Sendable {
+    var reg: ListenerRegistration?
 }
