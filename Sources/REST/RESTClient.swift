@@ -52,13 +52,6 @@ public actor RESTClient {
         _ url: URL,
         headers: [String: String]? = nil
     ) async throws(APIError) -> T {
-        logRequest(
-            url: url.absoluteString,
-            method: "GET",
-            headers: headers,
-            body: nil
-        )
-
         return try await request(url: url, method: .GET, headers: headers)
     }
 
@@ -78,13 +71,6 @@ public actor RESTClient {
         body: U,
         headers: [String: String]? = nil
     ) async throws(APIError) {
-        logRequest(
-            url: url.absoluteString,
-            method: "POST",
-            headers: headers,
-            body: try? customEncoder.encode(body)
-        )
-        
         return try await request(url: url, method: .POST, body: body, headers: headers)
     }
     
@@ -105,13 +91,6 @@ public actor RESTClient {
         body: U,
         headers: [String: String]? = nil
     ) async throws(APIError) -> T {
-        logRequest(
-            url: url.absoluteString,
-            method: "POST",
-            headers: headers,
-            body: try? customEncoder.encode(body)
-        )
-        
         return try await request(url: url, method: .POST, body: body, headers: headers)
     }
     
@@ -132,13 +111,6 @@ public actor RESTClient {
         body: U,
         headers: [String: String]? = nil
     ) async throws(APIError) -> T {
-        logRequest(
-            url: url.absoluteString,
-            method: "PATCH",
-            headers: headers,
-            body: try? customEncoder.encode(body)
-        )
-        
         return try await request(url: url, method: .PATCH, body: body, headers: headers)
     }
     
@@ -157,13 +129,6 @@ public actor RESTClient {
         _ url: URL,
         headers: [String: String]? = nil
     ) async throws(APIError) {
-        logRequest(
-            url: url.absoluteString,
-            method: "DELETE",
-            headers: headers,
-            body: nil
-        )
-        
         return try await request(url: url, method: .DELETE, body: EmptyBody.empty, headers: headers)
     }
 
@@ -188,6 +153,13 @@ public actor RESTClient {
                 throw APIError.encodingError
             }
         }
+        
+        logRequest(
+            url: url.absoluteString,
+            method: method.rawValue,
+            headers: request.allHTTPHeaderFields,
+            body: request.httpBody
+        )
         
         do {
             let (_, response) = try await session.data(for: request)
@@ -230,6 +202,14 @@ public actor RESTClient {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = await getHeaders(customHeaders: headers)
+        
+        logRequest(
+            url: url.absoluteString,
+            method: method.rawValue,
+            headers: request.allHTTPHeaderFields,
+            body: nil
+        )
+        
         return try await makeRequest(request, type: T.self)
     }
     
@@ -251,6 +231,13 @@ public actor RESTClient {
         } catch {
             throw APIError.encodingError
         }
+        
+        logRequest(
+            url: url.absoluteString,
+            method: method.rawValue,
+            headers: request.allHTTPHeaderFields,
+            body: request.httpBody
+        )
         
         return try await makeRequest(request, type: T.self)
     }
