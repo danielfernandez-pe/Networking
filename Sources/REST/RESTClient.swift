@@ -115,6 +115,25 @@ public actor RESTClient {
     }
     
     ///
+    /// Use this method to make a PATCH request to the server and get an empty
+    ///
+    /// Parameters:
+    /// - url: The URL to make the request to.
+    /// - body: The body to include in the request. It has to conform to Encodable.
+    /// - headers: The headers to include in the request.
+    ///
+    /// Throws:
+    /// - APIError: If there is an error with the request. APIError are generic errors that come from server responses.
+    ///
+    public func patch<T: Encodable>(
+        _ url: URL,
+        body: T,
+        headers: [String: String]? = nil
+    ) async throws(APIError) {
+        return try await request(url: url, method: .PATCH, body: body, headers: headers)
+    }
+    
+    ///
     /// Use this method to make a DELETE request to the server and expect no response.
     ///
     /// Parameters:
