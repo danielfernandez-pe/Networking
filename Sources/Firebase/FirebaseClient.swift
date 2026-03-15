@@ -36,6 +36,19 @@ public actor FirebaseClient {
     public func signOut() throws {
         try auth.signOut()
     }
+
+    ///
+    /// Returns: User Id
+    ///
+    public func signInWithApple(idToken: String, nonce: String) async throws -> String {
+        let credential = OAuthProvider.credential(
+            providerID: .apple,
+            idToken: idToken,
+            rawNonce: nonce
+        )
+        let result = try await auth.signIn(with: credential)
+        return result.user.uid
+    }
     
     public func getItem<T: Decodable>(
         path: String
