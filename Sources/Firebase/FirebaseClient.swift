@@ -7,11 +7,13 @@
 
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseFunctions
 
 public actor FirebaseClient {
     private let auth = Auth.auth()
     private let db = Firestore.firestore()
     private let decoder = Firestore.Decoder()
+    private lazy var functions = Functions.functions()
 
     public init() {
         decoder.dateDecodingStrategy = .iso8601
@@ -109,11 +111,20 @@ public actor FirebaseClient {
         }
     }
     
+    public func updateData(
+        path: String,
+        fields: [String: Any]
+    ) async throws {
+        try await db.document(path).updateData(fields)
+    }
+    
     ///
     /// Note: Remember to always cancel() this task when stop listening to updates in order to release Firebase listener.
     ///
     public func addListener<T: Decodable & Sendable>(path: String) -> AsyncStream<T> {
         let box = Box()
+        
+        
         
         return AsyncStream<T> { continuation in
             box.reg = db.document(path).addSnapshotListener { snapshot, error in
@@ -135,6 +146,17 @@ public actor FirebaseClient {
                 box.reg = nil
             }
         }
+    }
+    
+    
+    /// Call a callable function registered in Firebase.
+    ///
+    /// - Parameters:
+    ///     - name: Name of the callable function deployed in Firebase
+    ///     - data: A Dictionary of type [String: String]
+    /// - Returns: Void
+    public func callFunction(withName name: String, data: [String: String]? = nil) async throws {
+        _ = try await functions.httpsCallable(name).call(data)
     }
 }
 
